@@ -21,9 +21,6 @@ from utils import set_seeds, infinite, save_checkpoint, load_checkpoint
 
 @torch.no_grad()
 def validate(model: VLAModel, loader: DataLoader, device: torch.device) -> dict:
-    """
-    Returns val_loss (flow matching) and val_mse (infer vs gt action).
-    """
     model.eval()
     total_loss = total_mse = 0.0
     n = 0
@@ -104,7 +101,6 @@ def train(args: argparse.Namespace) -> None:
 
         pbar.set_postfix(loss=f"{loss.item():.4f}", lr=f"{scheduler.get_last_lr()[0]:.2e}")
 
-        # Validate + checkpoint
         if (step + 1) % cfg.train.val_every == 0 or step == cfg.train.num_steps - 1:
             metrics = validate(model, val_loader, device)
             tqdm.write(
@@ -118,7 +114,7 @@ def train(args: argparse.Namespace) -> None:
             if metrics["val_loss"] < best_val_loss:
                 best_val_loss = metrics["val_loss"]
                 save_checkpoint(best_path, step + 1, model, optimizer, scheduler, best_val_loss, run_id)
-                tqdm.write(f"  ↳ New best ({best_val_loss:.4f}) — saved to {best_path}")
+                tqdm.write(f"  ↳ New best ({best_val_loss:.4f}), saved to {best_path}")
 
     print(f"\nDone. Checkpoints at {ckpt_dir}")
 

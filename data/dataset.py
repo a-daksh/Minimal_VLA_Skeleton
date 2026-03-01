@@ -6,16 +6,11 @@ from config import cfg
 
 class SyntheticVLADataset(Dataset):
     """
-    Toy dataset with random tensors. Lazy / on-disk: each sample is saved as an
-    individual .pt file so __getitem__ reads from disk without loading everything
-    into memory. Swap implementation for real data later — interface stays the same.
-
-    Each sample (all float32 unless noted):
-        pixel_values   (3, 224, 224)   dummy image — already in encoder-ready form
-        input_ids      (64,)  int64    dummy token ids
-        attention_mask (64,)  int64    all-ones (full attention, no padding)
-        proprio        (proprio_dim,)  joint positions / velocities / gripper state
-        action         (action_dim,)   ground truth action
+    pixel_values   (3, 224, 224)   image already in encoder-ready form
+    input_ids      (64,)  int64    token ids
+    attention_mask (64,)  int64    all-ones (full attention, no padding)
+    proprio        (proprio_dim,)  joint positions / velocities / gripper state
+    action         (action_dim,)   ground truth action
     """
 
     def __init__(

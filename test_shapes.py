@@ -11,7 +11,7 @@ DEVICE     = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def check(name: str, tensor: torch.Tensor, expected: tuple) -> None:
-    status = "OK" if tuple(tensor.shape) == expected else f"FAIL — expected {expected}"
+    status = "OK" if tuple(tensor.shape) == expected else f"FAIL: expected {expected}"
     print(f"  {name:30s} {str(tuple(tensor.shape)):25s} {status}")
 
 
@@ -52,7 +52,7 @@ def main():
     loss = model.loss(pv, ids, mask, prop, act)
     print(f"loss {loss.item():.4f} OK" if loss.ndim == 0 else "loss FAIL. Not a scalar")
 
-    print("\n[ VLAModel — infer() ]")
+    print("\n[ VLAModel: infer() ]")
     pred = model.infer(pv, ids, mask, prop, num_steps=10)
     check("predicted action", pred, (BATCH_SIZE, cfg.robot.action_dim))
 

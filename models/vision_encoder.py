@@ -3,16 +3,13 @@ import torch.nn as nn
 from transformers import SiglipVisionModel, SiglipImageProcessor
 from config import cfg
 
+# load SiglipModel at the VLAModel level and pass backbone here to avoid downloading twice
 MODEL_ID = cfg.backbone.model_id
 
 
 class VisionEncoder(nn.Module):
 
     def __init__(self, backbone: SiglipVisionModel = None):
-        """
-        Args:
-            backbone: optional pre-loaded SiglipVisionModel.
-        """
         super().__init__()
         self.model = backbone if backbone is not None else SiglipVisionModel.from_pretrained(MODEL_ID)
         self.model.eval()
@@ -31,5 +28,4 @@ class VisionEncoder(nn.Module):
 
 
 def get_image_processor() -> SiglipImageProcessor:
-    """converts raw PIL/numpy images to pixel_values tensors."""
     return SiglipImageProcessor.from_pretrained(MODEL_ID)

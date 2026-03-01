@@ -19,14 +19,13 @@ class VLAModel(nn.Module):
     ):
         super().__init__()
 
-        # SigLIP is loaded once and split between the two encoders
+        # SigLIP loaded once, split between encoders
         siglip = SiglipModel.from_pretrained(MODEL_ID)
         self.vision_encoder   = VisionEncoder(backbone=siglip.vision_model)
         self.language_encoder = LanguageEncoder(backbone=siglip.text_model)
-        self.proprio_encoder = ProprioEncoder(proprio_dim)
+        self.proprio_encoder  = ProprioEncoder(proprio_dim)
 
         cond_dim = cfg.backbone.vision_dim + cfg.backbone.lang_dim + proprio_dim
-
         self.policy_head = FlowPolicyHead(
             action_dim=action_dim,
             cond_dim=cond_dim,
@@ -59,16 +58,7 @@ class VLAModel(nn.Module):
         proprio:        torch.Tensor,
         action:         torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Args:
-            pixel_values:   (B, 3, 224, 224)
-            input_ids:      (B, 64)
-            attention_mask: (B, 64)
-            proprio:        (B, proprio_dim)
-            ground truth action:         (B, action_dim)
-        Returns:
-            scalar flow matching loss
-        """
+        
         cond = self._fuse(pixel_values, input_ids, attention_mask, proprio)
         return self.policy_head.loss(action, cond)
 
@@ -81,9 +71,6 @@ class VLAModel(nn.Module):
         proprio:        torch.Tensor,
         num_steps:      int = 50,       # Euler integration steps
     ) -> torch.Tensor:
-        """
-        Returns:
-            action: (B, action_dim)
-        """
+        
         cond = self._fuse(pixel_values, input_ids, attention_mask, proprio)
         return self.policy_head.infer(cond, num_steps)

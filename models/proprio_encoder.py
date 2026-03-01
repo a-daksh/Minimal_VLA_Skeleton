@@ -3,9 +3,6 @@ import torch.nn as nn
 
 
 class ProprioEncoder(nn.Module):
-    """
-    Learned projection for proprioceptive state.
-    """
     def __init__(self, proprio_dim: int):
         super().__init__()
         self.net = nn.Sequential(
