@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 from transformers import SiglipVisionModel, SiglipImageProcessor
+from config import cfg
 
-# We are currently using the base version
-MODEL_ID = "google/siglip-base-patch16-224"
+MODEL_ID = cfg.backbone.model_id
 
 
 class VisionEncoder(nn.Module):
@@ -23,7 +23,7 @@ class VisionEncoder(nn.Module):
     def forward(self, pixel_values: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            pixel_values: (B, 3, 224, 224) preprocessed by SiglipImageProcessor
+            pixel_values: (B, 3, 224, 224)
         Returns:
             vision_emb: (B, 768)
         """

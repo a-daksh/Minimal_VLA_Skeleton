@@ -1,12 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 from pathlib import Path
-
-# Default dims — these will move to config once config is wired in
-PROPRIO_DIM = 9    # e.g. 7-DOF arm positions + 2 gripper
-ACTION_DIM  = 7    # e.g. delta xyz + delta rpy + gripper
-SEQ_LEN     = 64   # SigLIP tokenizer hard max
-IMAGE_SIZE  = 224  # SigLIP base-patch16-224 native resolution
+from config import cfg
 
 
 class SyntheticVLADataset(Dataset):
@@ -28,8 +23,8 @@ class SyntheticVLADataset(Dataset):
         root: str,
         split: str = "train",
         num_samples: int = 1000,
-        proprio_dim: int = PROPRIO_DIM,
-        action_dim: int = ACTION_DIM,
+        proprio_dim: int = cfg.robot.proprio_dim,
+        action_dim:  int = cfg.robot.action_dim,
     ):
         self.root = Path(root) / split
         self.proprio_dim = proprio_dim
@@ -44,9 +39,9 @@ class SyntheticVLADataset(Dataset):
         self.root.mkdir(parents=True, exist_ok=True)
         for i in range(n):
             sample = {
-                "pixel_values":   torch.randn(3, IMAGE_SIZE, IMAGE_SIZE),
-                "input_ids":      torch.randint(0, 32000, (SEQ_LEN,), dtype=torch.long),
-                "attention_mask": torch.ones(SEQ_LEN, dtype=torch.long),
+                "pixel_values":   torch.randn(3, cfg.backbone.image_size, cfg.backbone.image_size),
+                "input_ids":      torch.randint(0, 32000, (cfg.backbone.seq_len,), dtype=torch.long),
+                "attention_mask": torch.ones(cfg.backbone.seq_len, dtype=torch.long),
                 "proprio":        torch.randn(self.proprio_dim),
                 "action":         torch.randn(self.action_dim),
             }

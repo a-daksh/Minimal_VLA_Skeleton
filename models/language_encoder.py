@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from transformers import SiglipTextModel, AutoTokenizer
+from config import cfg
 
 # Same model as vision encoder, weights are shared at the SiglipModel level.
 # When loading both encoders together in vla_model.py, load SiglipModel once
