@@ -8,9 +8,13 @@ MODEL_ID = "google/siglip-base-patch16-224"
 
 class VisionEncoder(nn.Module):
 
-    def __init__(self):
+    def __init__(self, backbone: SiglipVisionModel = None):
+        """
+        Args:
+            backbone: optional pre-loaded SiglipVisionModel.
+        """
         super().__init__()
-        self.model = SiglipVisionModel.from_pretrained(MODEL_ID)
+        self.model = backbone if backbone is not None else SiglipVisionModel.from_pretrained(MODEL_ID)
         self.model.eval()
         for param in self.model.parameters():
             param.requires_grad = False

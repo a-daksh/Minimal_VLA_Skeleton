@@ -5,17 +5,20 @@ from transformers import SiglipTextModel, AutoTokenizer
 # Same model as vision encoder, weights are shared at the SiglipModel level.
 # When loading both encoders together in vla_model.py, load SiglipModel once
 # and pass .vision_model / .text_model to avoid loading the checkpoint twice.
-MODEL_ID = "google/siglip-base-patch16-224"
+MODEL_ID = cfg.backbone.model_id
 
 
 class LanguageEncoder(nn.Module):
     # NOTE: SiglipTextModel has a fixed max sequence length of 64 tokens. 
-    # That's fine for short robot instructions but anything longer gets
-    # truncated by the tokenizer by default
+    # That's fine for short robot instructions but anything longer gets truncated by the tokenizer by default
 
-    def __init__(self):
+    def __init__(self, backbone: SiglipTextModel = None):
+        """
+        Args:
+            backbone: optional pre-loaded SiglipTextModel.
+        """
         super().__init__()
-        self.model = SiglipTextModel.from_pretrained(MODEL_ID)
+        self.model = backbone if backbone is not None else SiglipTextModel.from_pretrained(MODEL_ID)
         self.model.eval()
         for param in self.model.parameters():
             param.requires_grad = False
