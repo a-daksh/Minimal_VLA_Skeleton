@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+checkpoints/
+*.pt
+*.pth
+/tmp/vla_test_data/
+.cache/
+*.log
+runs/
+wandb/
