@@ -1,20 +1,15 @@
-"""
-Shape validation: dataset → vision encoder → language encoder.
-Run this before building the policy head to confirm all dims are correct.
-
-    python test_shapes.py
-"""
-
 import torch
 from torch.utils.data import DataLoader
 
+from config import cfg
 from data.dataset import SyntheticVLADataset
 from models.vision_encoder import VisionEncoder
 from models.language_encoder import LanguageEncoder
+from models.vla_model import VLAModel
 
-BATCH_SIZE  = 4
-DATA_ROOT   = "/tmp/vla_test_data"
-DEVICE      = "cuda" if torch.cuda.is_available() else "cpu"
+BATCH_SIZE = 4
+DATA_ROOT  = "/tmp/vla_test_data"
+DEVICE     = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def check(name: str, tensor: torch.Tensor, expected: tuple) -> None:
@@ -34,33 +29,43 @@ def main():
     check("pixel_values",   batch["pixel_values"],   (BATCH_SIZE, 3, 224, 224))
     check("input_ids",      batch["input_ids"],       (BATCH_SIZE, 64))
     check("attention_mask", batch["attention_mask"],  (BATCH_SIZE, 64))
-    check("proprio",        batch["proprio"],         (BATCH_SIZE, 9))
-    check("action",         batch["action"],          (BATCH_SIZE, 7))
+    check("proprio",        batch["proprio"],         (BATCH_SIZE, cfg.robot.proprio_dim))
+    check("action",         batch["action"],          (BATCH_SIZE, cfg.robot.action_dim))
 
     # --- Vision encoder ---
     print("\n[ Vision Encoder ]")
-    vision_enc = VisionEncoder().to(DEVICE)
-    pixel_values = batch["pixel_values"].to(DEVICE)
-    vision_emb = vision_enc(pixel_values)
-    check("vision_emb", vision_emb, (BATCH_SIZE, 768))
+    vision_enc   = VisionEncoder().to(DEVICE)
+    vision_emb   = vision_enc(batch["pixel_values"].to(DEVICE))
+    check("vision_emb", vision_emb, (BATCH_SIZE, cfg.backbone.vision_dim))
 
     # --- Language encoder ---
     print("\n[ Language Encoder ]")
     lang_enc = LanguageEncoder().to(DEVICE)
-    input_ids      = batch["input_ids"].to(DEVICE)
-    attention_mask = batch["attention_mask"].to(DEVICE)
-    lang_emb = lang_enc(input_ids, attention_mask)
-    check("lang_emb", lang_emb, (BATCH_SIZE, 768))
+    lang_emb = lang_enc(batch["input_ids"].to(DEVICE), batch["attention_mask"].to(DEVICE))
+    check("lang_emb", lang_emb, (BATCH_SIZE, cfg.backbone.lang_dim))
 
     # --- Fusion preview ---
     print("\n[ Fusion (concat) ]")
-    proprio = batch["proprio"].to(DEVICE)
-    fused = torch.cat([vision_emb, lang_emb, proprio], dim=-1)
-    expected_fused = 768 + 768 + 9  # 1545
+    proprio       = batch["proprio"].to(DEVICE)
+    fused         = torch.cat([vision_emb, lang_emb, proprio], dim=-1)
+    expected_fused = cfg.backbone.vision_dim + cfg.backbone.lang_dim + cfg.robot.proprio_dim
     check("fused_emb", fused, (BATCH_SIZE, expected_fused))
 
-    print(f"\nPolicy head will receive conditioning of dim: {expected_fused}")
-    print(f"Action dim (policy head output):              {batch['action'].shape[-1]}")
+    # --- VLAModel end-to-end ---
+    print("\n[ VLAModel — loss() ]")
+    model = VLAModel().to(DEVICE)
+    pv   = batch["pixel_values"].to(DEVICE)
+    ids  = batch["input_ids"].to(DEVICE)
+    mask = batch["attention_mask"].to(DEVICE)
+    prop = batch["proprio"].to(DEVICE)
+    act  = batch["action"].to(DEVICE)
+
+    loss = model.loss(pv, ids, mask, prop, act)
+    print(f"loss {loss.item():.4f} OK" if loss.ndim == 0 else "loss FAIL. Not a scalar")
+
+    print("\n[ VLAModel — infer() ]")
+    pred = model.infer(pv, ids, mask, prop, num_steps=10)
+    check("predicted action", pred, (BATCH_SIZE, cfg.robot.action_dim))
 
 
 if __name__ == "__main__":
