@@ -24,6 +24,7 @@ class VisionEncoder(nn.Module):
         Returns:
             vision_emb: (B, 768)
         """
+        # use .last_hidden_state for non GAP
         return self.model(pixel_values=pixel_values).pooler_output
 
 

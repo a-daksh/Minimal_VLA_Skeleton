@@ -60,8 +60,10 @@ class FlowPolicyHead(nn.Module):
             scalar MSE loss
         """
         B = x1.shape[0]
+
         x0 = torch.randn_like(x1)
         t  = torch.rand(B, 1, device=x1.device)
+        
         x_t = t * x1 + (1 - t) * x0
         true_velocity = x1 - x0  # d/dt of linear interpolant
 
